@@ -1,0 +1,75 @@
+import streamlit as st
+import numpy as np
+import matplotlib.pyplot as plt
+
+st.set_page_config(page_title="급식 탄소발자국 계산기", layout="centered")
+
+# 👉 사이드바에 학생 이름 입력
+student_name = st.sidebar.text_input("👤 이름을 입력하세요", value="")
+
+if "page" not in st.session_state:
+    st.session_state.page = "intro"
+
+def go_to_main():
+    st.session_state.page = "main"
+
+if st.session_state.page == "intro":
+    st.markdown(
+        """
+        <div style='text-align:center; padding:60px; background: linear-gradient(#f3e7f9, white); border-radius: 20px;'>
+            <h2 style='font-size: 2.2em;'>오늘 먹은 급식,<br>탄소발자국 확인해볼까?</h2>
+            <br>
+            <button style='background-color:#9b7dea; color:white; font-size: 1.1em; padding: 12px 30px; border:none; border-radius:10px;' onclick='document.querySelector("button[type=submit]").click();'>🍽️ 제출하러 가기</button>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.button("🍽️ 제출하러 가기", on_click=go_to_main)
+
+elif st.session_state.page == "main":
+    st.header("📋 급식 탄소발자국 계산기")
+
+    # 이름 표시
+    if student_name:
+        st.subheader(f"👋 안녕하세요, **{student_name}** 학생!")
+
+    st.write("음식 잔반이 얼마나 있었나요? (0~3점 척도)")
+
+    # 잔반 슬라이더
+    rice = st.slider("🍚 밥을 얼마나 남겼나요?", 0, 3, 0, 1)
+    meat = st.slider("🥩 고기를 얼마나 남겼나요?", 0, 3, 0, 1)
+    fish = st.slider("🐟 생선을 얼마나 남겼나요?", 0, 3, 0, 1)
+    kimchi = st.slider("🥬 김치 등을 얼마나 남겼나요?", 0, 3, 0, 1)
+
+    total_score = rice + meat + fish + kimchi
+    co2_emission = rice * 0.5 + meat * 0.9 + fish * 0.8 + kimchi * 0.2
+
+    if st.button("🌿 탄소배출량 보기"):
+        st.markdown(f"<h3 style='text-align:center;'>💨 당신의 한 끼 급식은 <span style='color:#9b7dea'>{co2_emission:.1f} kg CO₂eq</span> 배출했어요!</h3>", unsafe_allow_html=True)
+
+        # 점수대별 메시지 스타일링
+        if total_score <= 2:
+            st.success("🌱 **훌륭해요!** 잔반이 거의 없네요. 지구가 환하게 웃고 있어요 😊", icon="✅")
+            st.markdown("<div style='background-color:#e7f9e7; padding:15px; border-radius:10px;'>🌿 <b>지속 가능성 최고!</b> 내일도 이렇게만 먹으면 지구도 건강해져요.</div>", unsafe_allow_html=True)
+        elif total_score <= 5:
+            st.info("🙂 **좋아요!** 조금 남기긴 했지만 꽤 잘했어요.", icon="👌")
+            st.markdown("<div style='background-color:#f3f0e3; padding:15px; border-radius:10px;'>🍽 <b>조금만 더 노력하면 완벽해요!</b> 내일은 더 줄여봐요!</div>", unsafe_allow_html=True)
+        elif total_score <= 8:
+            st.warning("😕 **조금 많이 남겼어요.** 식사량을 조절해보면 어때요?", icon="⚠️")
+            st.markdown("<div style='background-color:#fff3cd; padding:15px; border-radius:10px;'>🥕 <b>음식 낭비는 곧 탄소 낭비!</b> 조금만 더 신경 써보면 좋아요!</div>", unsafe_allow_html=True)
+        else:
+            st.error("🚨 **환경 비상!** 잔반이 너무 많아요!", icon="⛔")
+            st.markdown("<div style='background-color:#f8d7da; padding:15px; border-radius:10px;'>🔥 <b>이대로 가면 지구가 아파요.</b> 꼭 내일부터 실천해봐요!</div>", unsafe_allow_html=True)
+
+        # 그래프
+        days = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+        values = np.random.uniform(1.5, 3.5, size=5)
+        values[-1] = co2_emission
+
+        fig, ax = plt.subplots()
+        ax.bar(days, values, color=["#f4c430", "#ff7f50", "#87cefa", "#6495ed", "#9b7dea"])
+        ax.set_title("📊 음식물 탄소 배출량", fontsize=14)
+        ax.set_ylabel("kg CO₂eq")
+        st.pyplot(fig)
+
+        st.caption("✅ 내일은 어떤 선택을 해볼 수 있을까요?")
